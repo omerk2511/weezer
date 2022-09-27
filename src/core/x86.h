@@ -98,12 +98,6 @@ typedef enum {
     GET_FEATURES,
 } cpuid_function_t;
 
-cpuid_result_t get_cpuid(uint32_t function) {
-    cpuid_result_t result = {};
-    cpuid(function, &result.eax, &result.ebx, &result.ecx, &result.edx);
-    return result;
-}
-
 typedef enum {
     IA32_FEATURE_CONTROL = 0x3a,
     IA32_VMX_BASIC = 0x480,
@@ -140,16 +134,6 @@ typedef union {
     };
 } vmx_basic_t;
 
-uint64_t read_msr(uint32_t msr) {
-    uint32_t msr_l, msr_h;
-    asm volatile("rdmsr" : "=a"(msr_l), "=d"(msr_h) : "c"(msr));
-    return ((uint64_t)msr_h << 32) | msr_l;
-}
-
-void write_msr(uint32_t msr, uint64_t value) {
-    asm volatile("wrmsr" : : "c"(msr), "A"(value));
-}
-
 typedef union {
     uint64_t raw;
 
@@ -179,6 +163,22 @@ typedef union {
         uint64_t pks : 1;
     };
 } cr4_t;
+
+cpuid_result_t get_cpuid(uint32_t function) {
+    cpuid_result_t result = {};
+    cpuid(function, &result.eax, &result.ebx, &result.ecx, &result.edx);
+    return result;
+}
+
+uint64_t read_msr(uint32_t msr) {
+    uint32_t msr_l, msr_h;
+    asm volatile("rdmsr" : "=a"(msr_l), "=d"(msr_h) : "c"(msr));
+    return ((uint64_t)msr_h << 32) | msr_l;
+}
+
+void write_msr(uint32_t msr, uint64_t value) {
+    asm volatile("wrmsr" : : "c"(msr), "A"(value));
+}
 
 int vmxon(void* phys_vmxon_region) {
     int error;
