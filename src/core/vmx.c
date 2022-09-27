@@ -117,6 +117,10 @@ void* enter_root_mode(void) {
     return vmxon_region;
 }
 
+void exit_root_mode(void) {
+    vmxoff();
+}
+
 void setup_vmx(void* info) {
     // TODO:: pass return code to caller (not possible with current on_each_cpu design)
 
@@ -127,5 +131,5 @@ void setup_vmx(void* info) {
 }
 
 void cleanup_vmx(void* info) {
-    vmxoff();
+    exit_root_mode();
 }
