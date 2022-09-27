@@ -118,6 +118,8 @@ void* enter_root_mode(void) {
 }
 
 void setup_vmx(void* info) {
+    // TODO:: pass return code to caller (not possible with current on_each_cpu design)
+
     void* vmxon_region;
 
     enable_vmx();
