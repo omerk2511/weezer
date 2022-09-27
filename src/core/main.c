@@ -27,8 +27,6 @@ static struct miscdevice weezer_miscdev = {
 static int __init weezer_init(void) {
     int ret;
 
-    printk("%s: module loaded\n", MODULE_NAME);
-
     if (!is_vmx_supported()) {
         printk("%s: vmx is unsupported, aborting\n", MODULE_NAME);
         return -ENODEV;
@@ -45,16 +43,17 @@ static int __init weezer_init(void) {
         return ret;
     }
 
-    // enter_root_mode();
+    on_each_cpu(setup_vmx, NULL, true);
+    printk("%s: module successfully initialized\n", MODULE_NAME);
 
     return 0;
 }
 
 static void __exit weezer_exit(void) {
     misc_deregister(&weezer_miscdev);
-    // exit_root_mode();
+    on_each_cpu(cleanup_vmx, NULL, true);
 
-    printk("%s: module unloaded\n", MODULE_NAME);
+    printk("%s: module successfully unloaded\n", MODULE_NAME);
 }
 
 module_init(weezer_init);

@@ -106,6 +106,11 @@ cpuid_result_t get_cpuid(uint32_t function) {
 
 typedef enum {
     IA32_FEATURE_CONTROL = 0x3a,
+    IA32_VMX_BASIC = 0x480,
+    IA32_VMX_CR0_FIXED0 = 0x486,
+    IA32_VMX_CR0_FIXED1 = 0x487,
+    IA32_VMX_CR4_FIXED0 = 0x488,
+    IA32_VMX_CR4_FIXED1 = 0x489,
 } msr_t;
 
 typedef union {
@@ -118,12 +123,73 @@ typedef union {
     };
 } feature_control_t;
 
+typedef union {
+    uint64_t raw;
+
+    struct {
+        uint64_t revision_identifier : 31;
+        uint64_t : 1;
+        uint64_t region_size : 12;
+        uint64_t : 3;
+        uint64_t supported_ia64 : 1;
+        uint64_t supported_dual_monitor : 1;
+        uint64_t memory_type : 4;
+        uint64_t vm_exit_report : 1;
+        uint64_t vmx_capability_hint : 1;
+        uint64_t : 8;
+    };
+} vmx_basic_t;
+
 uint64_t read_msr(uint32_t msr) {
     uint32_t msr_l, msr_h;
     asm volatile("rdmsr" : "=a"(msr_l), "=d"(msr_h) : "c"(msr));
-    return (msr_h << 32) | msr_l;
+    return ((uint64_t)msr_h << 32) | msr_l;
 }
 
 void write_msr(uint32_t msr, uint64_t value) {
     asm volatile("wrmsr" : : "c"(msr), "A"(value));
+}
+
+typedef union {
+    uint64_t raw;
+
+    struct {
+        uint64_t vme : 1;
+        uint64_t pvi : 1;
+        uint64_t tsd : 1;
+        uint64_t de : 1;
+        uint64_t pse : 1;
+        uint64_t pae : 1;
+        uint64_t mce : 1;
+        uint64_t pge : 1;
+        uint64_t pce : 1;
+        uint64_t osfxsr : 1;
+        uint64_t osxmmexcpt : 1;
+        uint64_t umip : 1;
+        uint64_t la57 : 1;
+        uint64_t vmxe : 1;
+        uint64_t smxe : 1;
+        uint64_t fsgsbase : 1;
+        uint64_t pcide : 1;
+        uint64_t osxsave : 1;
+        uint64_t smep : 1;
+        uint64_t smap : 1;
+        uint64_t pke : 1;
+        uint64_t cet : 1;
+        uint64_t pks : 1;
+    };
+} cr4_t;
+
+int vmxon(void* phys_vmxon_region) {
+    int error;
+	asm volatile("vmxon %1"
+			     : "=r"(error)
+			     : "m"(phys_vmxon_region)
+			     : "memory");
+
+    return error;
+}
+
+void vmxoff(void) {
+    asm volatile("vmxoff");
 }
