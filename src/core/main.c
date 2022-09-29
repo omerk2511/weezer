@@ -1,3 +1,5 @@
+#include "config.h"
+#include "fops.h"
 #include "vmx.h"
 
 #include <linux/fs.h>
@@ -6,8 +8,6 @@
 #include <linux/module.h>
 
 // module metadata
-#define MODULE_NAME "weezer"
-
 MODULE_AUTHOR("Omer Katz");
 MODULE_LICENSE("MIT");
 MODULE_DESCRIPTION("The core kernel module component of the Weezer Type-2 hypervisor");
@@ -15,6 +15,9 @@ MODULE_VERSION("0.1");
 
 static const struct file_operations weezer_fops = {
     .owner = THIS_MODULE,
+    .open = weezer_open,
+    .release = weezer_release,
+    .unlocked_ioctl = weezer_ioctl,
 };
 
 static struct miscdevice weezer_miscdev = {
