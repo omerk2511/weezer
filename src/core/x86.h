@@ -181,11 +181,11 @@ void write_msr(uint32_t msr, uint64_t value) {
 }
 
 int vmxon(void* phys_vmxon_region) {
-    int error;
-	asm volatile("vmxon %1"
-			     : "=r"(error)
+    uint8_t error;
+	asm volatile("vmxon %1; setna %0;"
+			     : "=rm"(error)
 			     : "m"(phys_vmxon_region)
-			     : "memory");
+			     : "cc", "memory");
 
     return error;
 }

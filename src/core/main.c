@@ -44,8 +44,16 @@ static int __init weezer_init(void) {
     }
 
     on_each_cpu(setup_vmx, NULL, true);
-    printk("%s: module successfully initialized\n", MODULE_NAME);
+    if (!vmx_setup_succeeded()) {
+        printk("%s: vmx setup failed\n", MODULE_NAME);
 
+        misc_deregister(&weezer_miscdev);
+        on_each_cpu(cleanup_vmx, NULL, true);
+
+        return -ENODEV;
+    }
+
+    printk("%s: module successfully initialized\n", MODULE_NAME);
     return 0;
 }
 

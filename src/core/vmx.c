@@ -3,6 +3,26 @@
 
 #include <asm/special_insns.h>
 #include <linux/slab.h>
+#include <linux/smp.h>
+
+// TODO:: support cpu hotplug?
+//        https://docs.kernel.org/core-api/cpu_hotplug.html
+
+static void* g_vmxon_regions[NR_CPUS];
+
+static void insert_vmxon_region(void* vmxon_region) {
+    g_vmxon_regions[smp_processor_id()] = vmxon_region;
+}
+
+static void remove_vmxon_region(void) {
+    int processor_id;
+
+    processor_id = smp_processor_id();
+    if (g_vmxon_regions[processor_id]) {
+        kfree(g_vmxon_regions[processor_id]);
+        g_vmxon_regions[processor_id] = NULL;
+    }
+}
 
 int is_vmx_supported(void) {
     cpuid_result_t result;
@@ -122,14 +142,27 @@ void exit_root_mode(void) {
 }
 
 void setup_vmx(void* info) {
-    // TODO:: pass return code to caller (not possible with current on_each_cpu design)
-
     void* vmxon_region;
 
     enable_vmx();
-    vmxon_region = enter_root_mode(); // TODO:: prevent memory leak...
+    vmxon_region = enter_root_mode();
+    if (vmxon_region) {
+        insert_vmxon_region(vmxon_region);
+    }
 }
 
 void cleanup_vmx(void* info) {
     exit_root_mode();
+    remove_vmxon_region();
+}
+
+int vmx_setup_succeeded(void) {
+    int processor_id;
+    for (processor_id = 0; processor_id < num_online_cpus(); processor_id++) {
+        if (!g_vmxon_regions[processor_id]) {
+            return 0;
+        }
+    }
+
+    return 1;
 }

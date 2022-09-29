@@ -12,3 +12,5 @@ void exit_root_mode(void);
 
 void setup_vmx(void* info);
 void cleanup_vmx(void* info);
+
+int vmx_setup_succeeded(void);
